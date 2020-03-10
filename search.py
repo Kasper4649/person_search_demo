@@ -30,11 +30,11 @@ def detect(cfg,
         shutil.rmtree(output)  # delete output folder
     os.makedirs(output)  # make new output folder
 
-    ############# 行人重识别模型初始化 #############
+    # 行人重识别模型初始化
     query_loader, num_query = make_data_loader(reidCfg)
-    reidModel = build_model(reidCfg, num_classes=10126)
-    reidModel.load_param(reidCfg.TEST.WEIGHT)
-    reidModel.to(device).eval()
+    reidreid_modelodel = build_model(reidCfg, num_classes=10126)
+    reidreid_modelodel.load_param(reidCfg.TEST.WEIGHT)
+    reidreid_modelodel.to(device).eval()
 
     query_feats = []
     query_pids = []
@@ -43,7 +43,7 @@ def detect(cfg,
         with torch.no_grad():
             img, pid, camid = batch
             img = img.to(device)
-            feat = reidModel(img)  # 一共2张待查询图片，每张图片特征向量2048 torch.Size([2, 2048])
+            feat = reidreid_modelodel(img)  # 一共2张待查询图片，每张图片特征向量2048 torch.Size([2, 2048])
             query_feats.append(feat)
             query_pids.extend(np.asarray(pid))  # extend() 函数用于在列表末尾一次性追加另一个序列中的多个值（用新列表扩展原来的列表）。
 
@@ -137,7 +137,7 @@ def detect(cfg,
             if gallery_img:
                 gallery_img = torch.cat(gallery_img, dim=0)  # torch.Size([7, 3, 256, 128])
                 gallery_img = gallery_img.to(device)
-                gallery_feats = reidModel(gallery_img)  # torch.Size([7, 2048])
+                gallery_feats = reidreid_modelodel(gallery_img)  # torch.Size([7, 2048])
                 print("The gallery feature is normalized")
                 gallery_feats = torch.nn.functional.normalize(gallery_feats, dim=1, p=2)  # 计算出查询图片的特征向量
 
