@@ -57,5 +57,3 @@ class BaseImageDataset(BaseDataset):
         print("  ----------------------------------------")
         print("  query    | {:5d} | {:8d} | {:9d}".format(num_query_pids, num_query_imgs, num_query_cams))
         print("  ----------------------------------------")
-
-

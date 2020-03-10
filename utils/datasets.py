@@ -59,8 +59,8 @@ class LoadImages:  # for inference
         # os.path.splitext(“文件路径”)    分离文件名与扩展名；默认返回(fname,fextension)元组，可做分片操作
         # os.path.splitext(x): ('data\\samples\\bus', '.jpg')
         # os.path.splitext(x)[-1].lower(): '.jpg'
-        images = [x for x in files if os.path.splitext(x)[-1].lower() in img_formats] # 判断是否是支持的图片格式
-        videos = [x for x in files if os.path.splitext(x)[-1].lower() in vid_formats] # 判断是否是支持的视频格式
+        images = [x for x in files if os.path.splitext(x)[-1].lower() in img_formats]  # 判断是否是支持的图片格式
+        videos = [x for x in files if os.path.splitext(x)[-1].lower() in vid_formats]  # 判断是否是支持的视频格式
         nI, nV = len(images), len(videos)
 
         self.img_size = img_size
@@ -83,9 +83,9 @@ class LoadImages:  # for inference
         # 如果迭代次数等于图片数目，就停止迭代
         if self.count == self.nF:
             raise StopIteration
-        path = self.files[self.count] # 得到第self.count张图片路径
+        path = self.files[self.count]  # 得到第self.count张图片路径
 
-        if self.video_flag[self.count]: # 如果有视频的话
+        if self.video_flag[self.count]:  # 如果有视频的话
             # Read video
             self.mode = 'video'
             ret_val, img0 = self.cap.read()
@@ -112,7 +112,7 @@ class LoadImages:  # for inference
             print('image %g/%g %s: ' % (self.count, self.nF, path), end='')
 
         # Padded resize
-        img, *_ = letterbox(img0, new_shape=self.img_size) # img经过padding后的最小输入矩形图: (416, 320, 3)
+        img, *_ = letterbox(img0, new_shape=self.img_size)  # img经过padding后的最小输入矩形图: (416, 320, 3)
 
         # cv2.imshow('Padded Image', img)
         # cv2.waitKey()
@@ -204,7 +204,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             self.img_files = [x.replace('/', os.sep) for x in f.read().splitlines()  # os-agnostic
                               if os.path.splitext(x)[-1].lower() in img_formats]
 
-        n = len(self.img_files) # 4807 图片的个数
+        n = len(self.img_files)  # 4807 图片的个数
         bi = np.floor(np.arange(n) / batch_size).astype(np.int)  # batch index [0 0 1 1 2 2...]
         nb = bi[-1] + 1  # number of batches 2404
         assert n > 0, 'No images found in %s' % path
@@ -221,7 +221,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         # 图片的images文件名替换为标注label所在的labels
         # 图片的后缀遇到.png或者.jpg则替换为标注文件后缀.txt
         self.label_files = [x.replace('images', 'labels').replace(os.path.splitext(x)[-1], '.txt')
-                            for x in self.img_files] # 读取train.txt记录的图片路径
+                            for x in self.img_files]  # 读取train.txt记录的图片路径
 
         # Rectangular Training  https://github.com/ultralytics/yolov3/issues/232
         if self.rect:
@@ -262,12 +262,13 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         if augment or image_weights:  # cache labels for faster training
             self.labels = [np.zeros((0, 5))] * n
             extract_bounding_boxes = False
-            pbar = tqdm(self.label_files, desc='Reading labels') # Reading labels:   0%|          | 0/4807 [00:00<?, ?it/s]
+            pbar = tqdm(self.label_files,
+                        desc='Reading labels')  # Reading labels:   0%|          | 0/4807 [00:00<?, ?it/s]
             nm, nf, ne = 0, 0, 0  # number missing, number found, number empty
             for i, file in enumerate(pbar):
                 try:
-                    with open(file, 'r') as f: # 'data\\labels\\train\\Inria_319.txt'
-                        l = np.array([x.split() for x in f.read().splitlines()], dtype=np.float32) # 2代表两个目标物体: (2, 5)
+                    with open(file, 'r') as f:  # 'data\\labels\\train\\Inria_319.txt'
+                        l = np.array([x.split() for x in f.read().splitlines()], dtype=np.float32)  # 2代表两个目标物体: (2, 5)
                 except:
                     nm += 1  # print('missing labels for image %s' % self.img_files[i])  # file missing
                     continue
@@ -309,7 +310,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                 if self.augment and r < 1:  # if training (NOT testing), downsize to inference shape
                     h, w, _ = img.shape
                     img = cv2.resize(img, (int(w * r), int(h * r)), interpolation=cv2.INTER_LINEAR)  # or INTER_AREA
-                self.imgs[i] = img # 将等比例缩放后的图片存进去
+                self.imgs[i] = img  # 将等比例缩放后的图片存进去
 
         # Detect corrupted images https://medium.com/joelthchao/programmatically-detect-corrupted-image-8c1b2006c3d3
         # 判断图片是否下载下来正常，如果出现异常的图片就打印出来
@@ -457,12 +458,12 @@ def letterbox(img, new_shape=416, color=(128, 128, 128), mode='auto'):
     shape = img.shape[:2]  # current shape [height, width] (1080, 810)
 
     if isinstance(new_shape, int):
-        ratio = float(new_shape) / max(shape) # 416.0 / 1080 = 0.3851851851851852
+        ratio = float(new_shape) / max(shape)  # 416.0 / 1080 = 0.3851851851851852
     else:
         ratio = max(new_shape) / max(shape)  # ratio  = new / old
     ratiow, ratioh = ratio, ratio
     # round() 方法返回浮点数x的四舍五入值。
-    new_unpad = (int(round(shape[1] * ratio)), int(round(shape[0] * ratio))) # WH:(312, 416)
+    new_unpad = (int(round(shape[1] * ratio)), int(round(shape[0] * ratio)))  # WH:(312, 416)
 
     # Compute padding https://github.com/ultralytics/yolov3/issues/232
     if mode is 'auto':
@@ -487,8 +488,8 @@ def letterbox(img, new_shape=416, color=(128, 128, 128), mode='auto'):
     if shape[::-1] != new_unpad:  # new_unpad: (312, 416)
         # 进行resize
         img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_AREA)  # INTER_AREA is better, INTER_LINEAR is faster
-    top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1)) # 0, 0
-    left, right = int(round(dw - 0.1)), int(round(dw + 0.1)) # 4, 4
+    top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))  # 0, 0
+    left, right = int(round(dw - 0.1)), int(round(dw + 0.1))  # 4, 4
     # 为图像扩边（填充）
     # 想为图像周围建一个边可以使用cv2.copyMakeBorder()函数。这经常在卷积运算或0填充时被用到。具体参数如下：
     # 5.1 src输入图像

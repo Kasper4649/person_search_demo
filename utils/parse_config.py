@@ -11,20 +11,20 @@ def parse_model_cfg(path):
     """
     # 加载文件并过滤掉文本中多余内容
     file = open(path, 'r')
-    lines = file.read().split('\n') # store the lines in a list等价于readlines
-    lines = [x for x in lines if x and not x.startswith('#')] # 去掉空行和以#开头的注释行
+    lines = file.read().split('\n')  # store the lines in a list等价于readlines
+    lines = [x for x in lines if x and not x.startswith('#')]  # 去掉空行和以#开头的注释行
     lines = [x.rstrip().lstrip() for x in lines]  # 去掉左右两边的空格(rstricp是去掉右边的空格，lstrip是去掉左边的空格)
 
     mdefs = []  # module definitions
-    for line in lines: # '[net]'
+    for line in lines:  # '[net]'
         if line.startswith('['):  # 这是cfg文件中一个层(块)的开始
-            mdefs.append({})      # 添加一个字典
-            mdefs[-1]['type'] = line[1:-1].rstrip() # 把cfg的[]中的块名作为键type的值  <class 'list'>: [{'type': 'net'}]
+            mdefs.append({})  # 添加一个字典
+            mdefs[-1]['type'] = line[1:-1].rstrip()  # 把cfg的[]中的块名作为键type的值  <class 'list'>: [{'type': 'net'}]
             if mdefs[-1]['type'] == 'convolutional':
-                mdefs[-1]['batch_normalize'] = 0    # pre-populate with zeros (may be overwritten later)
+                mdefs[-1]['batch_normalize'] = 0  # pre-populate with zeros (may be overwritten later)
         else:
-            key, val = line.split("=") # 按等号分割 key:'batch' val:16
-            key = key.rstrip()         #  key(去掉右空格)
+            key, val = line.split("=")  # 按等号分割 key:'batch' val:16
+            key = key.rstrip()  # key(去掉右空格)
 
             if 'anchors' in key:
                 # key:'anchors'
@@ -34,7 +34,8 @@ def parse_model_cfg(path):
                 # np.array([float(x) for x in val.split(',')]): shape:(18,)
                 # 将val以逗号划分元素，强制转成浮点数，形成了浮点数构成的列表，
                 # 再转成numpy格式数组reshape为(9, 2)，因为两个元素代表一个anchor
-                mdefs[-1][key] = np.array([float(x) for x in val.split(',')]).reshape((-1, 2))  # np anchors shape: (9, 2)
+                mdefs[-1][key] = np.array([float(x) for x in val.split(',')]).reshape(
+                    (-1, 2))  # np anchors shape: (9, 2)
             else:
                 # strip() 方法用于移除字符串头尾指定的字符（默认为空格或换行符）或字符序列。
                 mdefs[-1][key] = val.strip()
@@ -61,13 +62,13 @@ def parse_data_cfg(path):
     # Parses the data configuration file
     options = dict()
     with open(path, 'r') as fp:
-        lines = fp.readlines() # 返回列表，包含所有的行。
+        lines = fp.readlines()  # 返回列表，包含所有的行。
 
-    for line in lines: # 'classes= 1\n'
+    for line in lines:  # 'classes= 1\n'
         line = line.strip()
-        if line == '' or line.startswith('#'): # 去掉空白行和以#开头的注释行
+        if line == '' or line.startswith('#'):  # 去掉空白行和以#开头的注释行
             continue
-        key, val = line.split('=') # 按等号分割 key:'classes'  value:' 1'
+        key, val = line.split('=')  # 按等号分割 key:'classes'  value:' 1'
         options[key.strip()] = val.strip()
 
     return options

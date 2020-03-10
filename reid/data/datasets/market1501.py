@@ -27,11 +27,12 @@ class Market1501(BaseImageDataset):
     # identities: 1501 (+1 for background)
     # images: 12936 (train) + 3368 (query) + 15913 (gallery)
     """
+
     def __init__(self, root='query', verbose=True, **kwargs):
         super(Market1501, self).__init__()
-        self.query_dir = root # 'query'
+        self.query_dir = root  # 'query'
 
-        query = self._process_dir(self.query_dir, relabel=False) # 对查询集进行预处理
+        query = self._process_dir(self.query_dir, relabel=False)  # 对查询集进行预处理
         if verbose:
             self.print_dataset_statistics(query)
         self.query = query

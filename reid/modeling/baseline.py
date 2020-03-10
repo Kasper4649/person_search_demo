@@ -10,6 +10,7 @@ from torch import nn
 from .backbones.resnet import ResNet, BasicBlock, Bottleneck
 from .backbones.resnet_ibn_a import resnet50_ibn_a
 
+
 class Baseline(nn.Module):
     in_planes = 2048
 
@@ -25,8 +26,8 @@ class Baseline(nn.Module):
         super(Baseline, self).__init__()
         if model_name == 'resnet18':
             self.in_planes = 512
-            self.base = ResNet(last_stride=last_stride, 
-                               block=BasicBlock, 
+            self.base = ResNet(last_stride=last_stride,
+                               block=BasicBlock,
                                layers=[2, 2, 2, 2])
         elif model_name == 'resnet34':
             self.in_planes = 512
@@ -57,7 +58,6 @@ class Baseline(nn.Module):
 
         # print("Test with feature after BN")
         return feat
-
 
     def load_param(self, trained_path):
         param_dict = torch.load(trained_path)
