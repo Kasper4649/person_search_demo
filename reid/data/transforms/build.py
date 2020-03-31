@@ -1,12 +1,7 @@
 # encoding: utf-8
-"""
-@author:  liaoxingyu
-@contact: liaoxingyu2@jd.com
-"""
+
 
 import torchvision.transforms as T
-
-from .transforms import RandomErasing
 
 
 # 这里改成只构建验证集了

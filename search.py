@@ -11,9 +11,7 @@ from utils.datasets import *
 from utils.utils import *
 
 
-def detect(cfg,
-           data,
-           weights,
+def detect(opt,
            images='data/samples',  # input folder
            output='output',  # output folder
            fourcc='mp4v',  # video codec
@@ -43,7 +41,7 @@ def detect(cfg,
         with torch.no_grad():
             img, pid, camid = batch
             img = img.to(device)
-            feat = reidreid_modelodel(img)  # 一共2张待查询图片，每张图片特征向量2048 torch.Size([2, 2048])
+            feat = reidreid_modelodel(img)  # 一共 2 张待查询图片，每张图片特征向量 2048 torch.Size([2, 2048])
             query_feats.append(feat)
             query_pids.extend(np.asarray(pid))  # extend() 函数用于在列表末尾一次性追加另一个序列中的多个值（用新列表扩展原来的列表）。
 
@@ -51,19 +49,19 @@ def detect(cfg,
     print("The query feature is normalized")
     query_feats = torch.nn.functional.normalize(query_feats, dim=1, p=2)  # 计算出查询图片的特征向量
 
-    ############# 行人检测模型初始化 #############
-    model = Darknet(cfg, img_size)
+    # 行人检测模型初始化
+    model = Darknet(opt.cfg, img_size)
 
     # Load weights
-    if weights.endswith('.pt'):  # pytorch format
-        model.load_state_dict(torch.load(weights, map_location=device)['model'])
+    if opt.weights.endswith('.pt'):  # pytorch format
+        model.load_state_dict(torch.load(opt.weights, map_location=device)['model'])
     else:  # darknet format
-        _ = load_darknet_weights(model, weights)
+        _ = load_darknet_weights(model, opt.weights)
 
     # Eval mode
     model.to(device).eval()
     # Half precision
-    opt.half = opt.half and device.type != 'cpu'  # half precision only supported on CUDA
+    opt.half = opt.half and device.type != 'cpu'  # half precision only supported on cuda
     if opt.half:
         model.half()
 
@@ -71,18 +69,18 @@ def detect(cfg,
     vid_path, vid_writer = None, None
     if opt.webcam:
         save_images = False
-        dataloader = LoadWebcam(img_size=img_size, half=opt.half)
+        data_loader = LoadWebcam(img_size=img_size, half=opt.half)
     else:
-        dataloader = LoadImages(images, img_size=img_size, half=opt.half)
+        data_loader = LoadImages(images, img_size=img_size, half=opt.half)
 
     # Get classes and colors
     # parse_data_cfg(data)['names']:得到类别名称文件路径 names=data/coco.names
-    classes = load_classes(parse_data_cfg(data)['names'])  # 得到类别名列表: ['person', 'bicycle'...]
+    classes = load_classes(parse_data_cfg(opt.data)['names'])  # 得到类别名列表: ['person', 'bicycle'...]
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(classes))]  # 对于每种类别随机使用一种颜色画框
 
     # Run inference
     t0 = time.time()
-    for i, (path, img, im0, vid_cap) in enumerate(dataloader):
+    for i, (path, img, im0, vid_cap) in enumerate(data_loader):
         t = time.time()
         # if i < 500 or i % 5 == 0:
         #     continue
@@ -151,13 +149,14 @@ def detect(cfg,
                 # distmat - 2 * qf@gf.t()
                 # distmat: qf^2 + gf^2
                 # qf: torch.Size([2, 2048])
+
                 # gf: torch.Size([7, 2048])
                 distmat.addmm_(1, -2, query_feats, gallery_feats.t())
                 # distmat = (qf - gf)^2
                 # distmat = np.array([[1.79536, 2.00926, 0.52790, 1.98851, 2.15138, 1.75929, 1.99410],
                 #                     [1.78843, 1.96036, 0.53674, 1.98929, 1.99490, 1.84878, 1.98575]])
                 distmat = distmat.cpu().numpy()  # <class 'tuple'>: (3, 12)
-                distmat = distmat.sum(axis=0) / len(query_feats)  # 平均一下query中同一行人的多个结果
+                distmat = distmat.sum(axis=0) / len(query_feats)  # 平均一下 query 中同一行人的多个结果
                 index = distmat.argmin()
                 if distmat[index] < dist_thres:
                     print('距离：%s' % distmat[index])
@@ -168,10 +167,10 @@ def detect(cfg,
         print('Done. (%.3fs)' % (time.time() - t))
 
         if opt.webcam:  # Show live webcam
-            cv2.imshow(weights, im0)
+            cv2.imshow(opt.weights, im0)
 
         if save_images:  # Save image with detections
-            if dataloader.mode == 'images':
+            if data_loader.mode == 'images':
                 cv2.imwrite(save_path, im0)
             else:
                 if vid_path != save_path:  # new video
@@ -187,38 +186,5 @@ def detect(cfg,
 
     if save_images:
         print('Results saved to %s' % os.getcwd() + os.sep + output)
-        if platform == 'darwin':  # macos
-            os.system('open ' + output + ' ' + save_path)
 
     print('Done. (%.3fs)' % (time.time() - t0))
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--cfg', type=str, default='cfg/yolov3.cfg', help="模型配置文件路径")
-    parser.add_argument('--data', type=str, default='data/coco.data', help="数据集配置文件所在路径")
-    parser.add_argument('--weights', type=str, default='weights/yolov3.weights', help='模型权重文件路径')
-    parser.add_argument('--images', type=str, default='data/samples', help='需要进行检测的图片文件夹')
-    parser.add_argument('-q', '--query', default=r'query', help='查询图片的读取路径.')
-    parser.add_argument('--img-size', type=int, default=416, help='输入分辨率大小')
-    parser.add_argument('--conf-thres', type=float, default=0.1, help='物体置信度阈值')
-    parser.add_argument('--nms-thres', type=float, default=0.4, help='NMS阈值')
-    parser.add_argument('--dist_thres', type=float, default=1.0, help='行人图片距离阈值，小于这个距离，就认为是该行人')
-    parser.add_argument('--fourcc', type=str, default='mp4v', help='fourcc output video codec (verify ffmpeg support)')
-    parser.add_argument('--output', type=str, default='output', help='检测后的图片或视频保存的路径')
-    parser.add_argument('--half', default=False, help='是否采用半精度FP16进行推理')
-    parser.add_argument('--webcam', default=False, help='是否使用摄像头进行检测')
-    opt = parser.parse_args()
-    print(opt)
-
-    with torch.no_grad():
-        detect(opt.cfg,
-               opt.data,
-               opt.weights,
-               images=opt.images,
-               img_size=opt.img_size,
-               conf_thres=opt.conf_thres,
-               nms_thres=opt.nms_thres,
-               dist_thres=opt.dist_thres,
-               fourcc=opt.fourcc,
-               output=opt.output)

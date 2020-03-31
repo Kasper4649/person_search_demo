@@ -1,8 +1,4 @@
 # encoding: utf-8
-"""
-@author:  sherlock
-@contact: sherlockliao01@gmail.com
-"""
 
 import glob
 import re
@@ -19,9 +15,9 @@ class Market1501(BaseImageDataset):
     以 0001_c1s1_000151_01.jpg 为例
     1） 0001 表示每个人的标签编号，从0001到1501；
     2） c1 表示第一个摄像头(camera1)，共有6个摄像头；
-    3） s1 表示第一个录像片段(sequece1)，每个摄像机都有数个录像段；
+    3） s1 表示第一个录像片段(sequence1)，每个摄像机都有数个录像段；
     4） 000151 表示 c1s1 的第000151帧图片，视频帧率25fps；
-    5） 01 表示 c1s1_001051 这一帧上的第1个检测框，由于采用DPM检测器，
+    5） 01 表示 c1s1_001051 这一帧上n的第1个检测框，由于采用DPM检测器，
         对于每一帧上的行人可能会框出好几个bbox。00 表示手工标注框
     Dataset statistics:
     # identities: 1501 (+1 for background)
@@ -51,10 +47,10 @@ class Market1501(BaseImageDataset):
         img_paths = glob.glob(osp.join(dir_path, '*.jpg'))
 
         # \d   : 匹配任意数字，等价于 [0-9]
-        # [...]: 用来表示一组字符,单独列出：[amk] 匹配 'a'，'m'或'k'
-        # re+	 : 匹配1个或多个的表达式。
+        # [...]: 用来表示一组字符,单独列出：[amk] 匹配 'a'，'m' 或 'k'
+        # re+	 : 匹配 1 个或多个的表达式。
         # (re) : 匹配括号内的表达式，也表示一个组
-        # '-1_c6s1_078001_05.jpg',注意-1的情况，所以有 [-\d]
+        # '-1_c6s1_078001_05.jpg',注意 -1 的情况，所以有 [-\d]
         # 由于是多个数字例如'0002_c1s1_000451_03.jpg'，0002，因此 [-\d]+
         # 因为要取出这个数字，因此加上括号作为一个 group
         pattern = re.compile(r'([-\d]+)_c(\d)')

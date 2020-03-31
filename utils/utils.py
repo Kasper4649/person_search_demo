@@ -9,7 +9,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
 import tqdm
 
 from . import torch_utils  # , google_utils
@@ -19,11 +18,11 @@ from PIL import Image, ImageDraw, ImageFont
 
 matplotlib.rc('font', **{'size': 11})
 
-# Set printoptions
+# Set print options
 torch.set_printoptions(linewidth=320, precision=5, profile='long')
 np.set_printoptions(linewidth=320, formatter={'float_kind': '{:11.5g}'.format})  # format short g, %precision=5
 
-# Prevent OpenCV from multithreading (to use PyTorch DataLoader)
+# Prevent OpenCV from multiThreading (to use PyTorch DataLoader)
 cv2.setNumThreads(0)
 
 
@@ -78,7 +77,7 @@ def xyxy2xywh(x):
 
 
 def xywh2xyxy(x):
-    # 由center_x center_y width height转为左上角右下角xmin, ymin, xmax, ymax
+    # 由center_x center_y width height 转为左上角右下角 xmin, ymin, xmax, ymax
     # Convert bounding box format from [x, y, w, h] to [x1, y1, x2, y2]
     y = torch.zeros_like(x) if isinstance(x, torch.Tensor) else np.zeros_like(x)
     y[:, 0] = x[:, 0] - x[:, 2] / 2
@@ -157,11 +156,11 @@ def wh_iou(box1, box2):
 
 def non_max_suppression(prediction, conf_thres=0.5, nms_thres=0.5):
     """
-    剔除物体置信度得分object confidence score低于'conf_thres'阈值的检测框
-    再利用NMS进一步过滤筛选检测框
-    :param prediction: 处理后的YOLO预测，相对于原图 torch.Size([1, 8190, 85])
+    剔除物体置信度得分 object confidence score 低于'conf_thres'阈值的检测框
+    再利用 NMS 进一步过滤筛选检测框
+    :param prediction: 处理后的 YOLO 预测，相对于原图 torch.Size([1, 8190, 85])
     :param conf_thres: 置信度阈值
-    :param nms_thres:  NMS阈值
+    :param nms_thres:  NMS 阈值
     :return: Returns detections with shape:(x1, y1, x2, y2, object_conf, class_conf, class)
     """
 
@@ -179,7 +178,7 @@ def non_max_suppression(prediction, conf_thres=0.5, nms_thres=0.5):
         # class_pred:每个预测框概率最高的那个类别       torch.Size([8190])
         class_conf, class_pred = pred[:, 5:].max(1)
         # 对于测试阶段来说，网络直接输出 Pr(class/object)，就已经可以代表有物体存在的条件下类别概率。
-        # 但是在测试阶段，作者还把这个概率乘上了confidence。
+        # 但是在测试阶段，作者还把这个概率乘上了 confidence。
         # improves mAP from 0.549 to 0.551
         pred[:, 4] *= class_conf
 
@@ -212,7 +211,7 @@ def non_max_suppression(prediction, conf_thres=0.5, nms_thres=0.5):
         pred = pred[(-pred[:, 4]).argsort()]
 
         det_max = []
-        ############# NMS方法选择 #############
+        # NMS方法选择
         """
         'OR'   : 一般说的NMS都是OR方式
         'AND'  : 这个与OR整体类似，不同在于如果出现这个类别只有一个框，则认为无效。

@@ -83,7 +83,7 @@ class LoadImages:  # for inference
         # 如果迭代次数等于图片数目，就停止迭代
         if self.count == self.nF:
             raise StopIteration
-        path = self.files[self.count]  # 得到第self.count张图片路径
+        path = self.files[self.count]  # 得到第 self.count 张图片路径
 
         if self.video_flag[self.count]:  # 如果有视频的话
             # Read video
@@ -119,7 +119,7 @@ class LoadImages:  # for inference
 
         # Normalize RGB
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR2RGB  HWC2CHW: (3, 416, 320)
-        # ascontiguousarray函数将一个内存不连续存储的数组转换为内存连续存储的数组，使得运行速度更快。
+        # ascontiguousarray 函数将一个内存不连续存储的数组转换为内存连续存储的数组，使得运行速度更快。
         img = np.ascontiguousarray(img, dtype=np.float16 if self.half else np.float32)  # uint8 to fp16/fp32
         img /= 255.0  # 0 - 255 to 0.0 - 1.0
 
@@ -189,7 +189,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                  cache_images=False):
         """
 
-        :param path: 得到训练集的ID文件路径 'data/train.txt'
+        :param path: 得到训练集的 ID 文件路径 'data/train.txt'
         :param img_size: 网络输入分辨率 416
         :param batch_size: 2
         :param augment: 是否进行数据增广
@@ -199,7 +199,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         :param cache_images: True
         """
         path = str(Path(path))  # os-agnostic
-        # 读取训练/验证txt文件的内容
+        # 读取训练/验证 txt 文件的内容
         with open(path, 'r') as f:
             self.img_files = [x.replace('/', os.sep) for x in f.read().splitlines()  # os-agnostic
                               if os.path.splitext(x)[-1].lower() in img_formats]
@@ -217,11 +217,11 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         self.image_weights = image_weights
         self.rect = False if image_weights else rect
 
-        # 将图片与标注对应上，根据train.txt的图片路径得到对应的标注文件路径
-        # 图片的images文件名替换为标注label所在的labels
-        # 图片的后缀遇到.png或者.jpg则替换为标注文件后缀.txt
+        # 将图片与标注对应上，根据 train.txt 的图片路径得到对应的标注文件路径
+        # 图片的 images 文件名替换为标注 label 所在的 labels
+        # 图片的后缀遇到 .png 或者 .jpg 则替换为标注文件后缀 .txt
         self.label_files = [x.replace('images', 'labels').replace(os.path.splitext(x)[-1], '.txt')
-                            for x in self.img_files]  # 读取train.txt记录的图片路径
+                            for x in self.img_files]  # 读取 train.txt 记录的图片路径
 
         # Rectangular Training  https://github.com/ultralytics/yolov3/issues/232
         if self.rect:
@@ -268,7 +268,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             for i, file in enumerate(pbar):
                 try:
                     with open(file, 'r') as f:  # 'data\\labels\\train\\Inria_319.txt'
-                        l = np.array([x.split() for x in f.read().splitlines()], dtype=np.float32)  # 2代表两个目标物体: (2, 5)
+                        l = np.array([x.split() for x in f.read().splitlines()], dtype=np.float32)  # 2 代表两个目标物体: (2, 5)
                 except:
                     nm += 1  # print('missing labels for image %s' % self.img_files[i])  # file missing
                     continue
@@ -300,7 +300,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             assert nf > 0, 'No labels found. Recommend correcting image and label paths.'
 
         # Cache images into memory for faster training (~5GB)
-        # imread比较慢，因此这里直接先读取最多10000张图片，大概5GB，加快训练
+        # imread 比较慢，因此这里直接先读取最多 10000 张图片，大概 5GB，加快训练
         if cache_images and augment:  # if training
             for i in tqdm(range(min(len(self.img_files), 10000)), desc='Reading images'):  # max 10k images
                 img_path = self.img_files[i]
@@ -445,13 +445,13 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
 
 def letterbox(img, new_shape=416, color=(128, 128, 128), mode='auto'):
     """
-    求得较长边缩放到416的比例，然后对图片wh按这个比例缩放，使得较长边达到416,
-    再对较短边进行填充使得较短边满足32的倍数
-    :param img: 需要处理的原始图片CHW
+    求得较长边缩放到 416 的比例，然后对图片 wh 按这个比例缩放，使得较长边达到 416,
+    再对较短边进行填充使得较短边满足 32 的倍数
+    :param img: 需要处理的原始图片 CHW
     :param new_shape: 网络的输入分辨率
-    :param color: 进行pad时，填充的颜色(值)
+    :param color: 进行 pad 时，填充的颜色(值)
     :param mode:需要进行填充的模式
-    :return: 返回填充后wh都为32倍数的图片
+    :return: 返回填充后 wh 都为 32 倍数的图片
     """
     # Resize a rectangular image to a 32 pixel multiple rectangle
     # https://github.com/ultralytics/yolov3/issues/232
@@ -462,45 +462,45 @@ def letterbox(img, new_shape=416, color=(128, 128, 128), mode='auto'):
     else:
         ratio = max(new_shape) / max(shape)  # ratio  = new / old
     ratiow, ratioh = ratio, ratio
-    # round() 方法返回浮点数x的四舍五入值。
+    # round() 方法返回浮点数 x 的四舍五入值。
     new_unpad = (int(round(shape[1] * ratio)), int(round(shape[0] * ratio)))  # WH:(312, 416)
 
     # Compute padding https://github.com/ultralytics/yolov3/issues/232
     if mode is 'auto':
-        # 填充为符合条件的最小矩形minimum rectangle
-        # 使得较长边达到416, 再对较短边进行填充使得较短边满足32的倍数
+        # 填充为符合条件的最小矩形 minimum rectangle
+        # 使得较长边达到 416, 再对较短边进行填充使得较短边满足 32 的倍数
         dw = np.mod(new_shape - new_unpad[0], 32) / 2  # width padding  4.0
         dh = np.mod(new_shape - new_unpad[1], 32) / 2  # height padding 0.0
     elif mode is 'square':  # square
-        # 直接填充为416x416的正方形
+        # 直接填充为 416x416 的正方形
         dw = (new_shape - new_unpad[0]) / 2  # width padding
         dh = (new_shape - new_unpad[1]) / 2  # height padding
     elif mode is 'rect':  # square
-        # 填充为指定形状new_shape=(320, 416)的矩形
+        # 填充为指定形状 new_shape=(320, 416) 的矩形
         dw = (new_shape[1] - new_unpad[0]) / 2  # width padding
         dh = (new_shape[0] - new_unpad[1]) / 2  # height padding
     elif mode is 'scaleFill':
-        # resize到指定的416x416
+        # resize 到指定的 416x416
         dw, dh = 0.0, 0.0
         new_unpad = (new_shape, new_shape)
         ratiow, ratioh = new_shape / shape[1], new_shape / shape[0]
 
     if shape[::-1] != new_unpad:  # new_unpad: (312, 416)
-        # 进行resize
+        # 进行 resize
         img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_AREA)  # INTER_AREA is better, INTER_LINEAR is faster
     top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))  # 0, 0
     left, right = int(round(dw - 0.1)), int(round(dw + 0.1))  # 4, 4
     # 为图像扩边（填充）
-    # 想为图像周围建一个边可以使用cv2.copyMakeBorder()函数。这经常在卷积运算或0填充时被用到。具体参数如下：
-    # 5.1 src输入图像
-    # 5.2 top,bottom,left,right对应边界的像素数目
-    # 5.3 borderType要添加哪种类型的边界：
-    # 5.3.1	cv2.BORDER_CONSTANT添加有颜色的常数值边界，还需要下一个参数（value）
-    # 5.3.2	cv2.BORDER_REFLIECT边界元素的镜像。例如：fedcba | abcdefgh | hgfedcb
-    # 5.3.3	cv2.BORDER_101或者cv2.BORDER_DEFAULT跟上面一样，但稍作改动，例如：gfedcb | abcdefgh | gfedcba
-    # 5.3.4	cv2.BORDER_REPLICATE复后一个元素。例如: aaaaaa| abcdefgh|hhhhhhh
+    # 想为图像周围建一个边可以使用 cv2.copyMakeBorder() 函数。这经常在卷积运算或 0 填充时被用到。具体参数如下：
+    # 5.1 src 输入图像
+    # 5.2 top,bottom,left,right 对应边界的像素数目
+    # 5.3 borderType 要添加哪种类型的边界：
+    # 5.3.1	cv2.BORDER_CONSTANT 添加有颜色的常数值边界，还需要下一个参数（value）
+    # 5.3.2	cv2.BORDER_REFLIECT 边界元素的镜像。例如：fedcba | abcdefgh | hgfedcb
+    # 5.3.3	cv2.BORDER_101 或者 cv2.BORDER_DEFAULT 跟上面一样，但稍作改动，例如：gfedcb | abcdefgh | gfedcba
+    # 5.3.4	cv2.BORDER_REPLICATE 复后一个元素。例如: aaaaaa| abcdefgh|hhhhhhh
     # 5.3.5	cv2.BORDER_WRAP 不知怎么了, 就像样: cdefgh| abcdefgh|abcdefg
-    # 5.3.6	value边界颜色
+    # 5.3.6	value 边界颜色
     img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
     return img, ratiow, ratioh, dw, dh
 

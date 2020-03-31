@@ -1,0 +1,15 @@
+syntax = "proto3";
+package message;
+
+message SearchRequest {
+    bytes file = 1;
+    string name = 2;
+}
+
+message Response {
+    bytes file = 1;
+}
+
+service SearchService {
+    rpc Search (SearchRequest) returns (Response) {}
+}

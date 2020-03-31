@@ -1,6 +1,5 @@
 import argparse
 import time
-from sys import platform
 
 from models import *
 from utils.datasets import *
@@ -22,8 +21,8 @@ def detect(cfg,
     device = torch_utils.select_device(force_cpu=False)
     torch.backends.cudnn.benchmark = False  # set False for reproducible results
     if os.path.exists(output):
-        shutil.rmtree(output)  # 删除output文件夹，清理之前的检测结果
-    os.makedirs(output)  # 创建新的output文件夹
+        shutil.rmtree(output)  # 删除 output 文件夹，清理之前的检测结果
+    os.makedirs(output)  # 创建新的 output 文件夹
 
     # Initialize model
     model = Darknet(cfg, img_size)
@@ -45,13 +44,13 @@ def detect(cfg,
     if opt.half:
         model.half()
 
-    # Set Dataloader
+    # Set data loader
     vid_path, vid_writer = None, None
     if opt.webcam:
         save_images = False
-        dataloader = LoadWebcam(img_size=img_size, half=opt.half)
+        data_loader = LoadWebcam(img_size=img_size, half=opt.half)
     else:
-        dataloader = LoadImages(images, img_size=img_size, half=opt.half)
+        data_loader = LoadImages(images, img_size=img_size, half=opt.half)
 
     # Get classes and colors
     # parse_data_cfg(data)['names']:得到类别名称文件路径 names=data/coco.names
@@ -60,9 +59,9 @@ def detect(cfg,
 
     # Run inference
     t0 = time.time()
-    for i, (path, img, im0, vid_cap) in enumerate(dataloader):
+    for i, (path, img, im0, vid_cap) in enumerate(data_loader):
         t = time.time()
-        save_path = str(Path(output) / Path(path).name)  # 保存的路径
+        save_path = str(Path(output) / ("detect_" + Path(path).name))  # 保存的路径
 
         # Get detections shape: (3, 416, 320)
         img = torch.from_numpy(img).unsqueeze(0).to(device)  # torch.Size([1, 3, 416, 320])
@@ -86,7 +85,8 @@ def detect(cfg,
                 # *xyxy: 对于原图来说的左上角右下角坐标: [tensor(349.), tensor(26.), tensor(468.), tensor(341.)]
                 if save_txt:  # Write to file
                     with open(save_path + '.txt', 'a') as file:
-                        file.write(('%g ' * 6 + '\n') % (*xyxy, cls, conf))
+                        file.write(classes[int(cls)] + ": ")
+                        file.write(('%g ' * 5 + '\n') % (*xyxy, conf))
 
                 # Add bbox to the image
                 label = '%s %.2f' % (classes[int(cls)], conf)  # 'person 1.00'
@@ -102,7 +102,7 @@ def detect(cfg,
             cv2.imshow(weights, im0)
 
         if save_images:  # Save image with detections
-            if dataloader.mode == 'images':
+            if data_loader.mode == 'images':
                 cv2.imwrite(save_path, im0)
             else:
                 if vid_path != save_path:  # new video
@@ -118,8 +118,6 @@ def detect(cfg,
 
     if save_images:
         print('Results saved to %s' % os.getcwd() + os.sep + output)
-        if platform == 'darwin':  # macos
-            os.system('open ' + output + ' ' + save_path)
 
     print('Done. (%.3fs)' % (time.time() - t0))
 
@@ -149,4 +147,6 @@ if __name__ == '__main__':
                conf_thres=opt.conf_thres,
                nms_thres=opt.nms_thres,
                fourcc=opt.fourcc,
-               output=opt.output)
+               output=opt.output,
+               save_txt=False,
+               save_images=True)

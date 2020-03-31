@@ -1,4 +1,5 @@
 import torch.nn.functional as F
+import torch.nn as nn
 
 from utils.parse_config import *
 from utils.utils import *
@@ -56,6 +57,7 @@ def create_modules(module_defs, img_size, arc):
 			没有使用 Bilinear2dUpsampling
 			实际使用的为最近邻插值
 			'''
+
             # 这个stride在cfg中就是2，所以下面的scale_factor写2或者stride是等价的
             modules = nn.Upsample(scale_factor=int(mdef['stride']), mode='nearest')
 
@@ -120,7 +122,8 @@ def create_modules(module_defs, img_size, arc):
         # Register module list and number of output filters
         module_list.append(modules)
         output_filters.append(filters)  # 存储经过卷积输出的channel数目 [3, 32, 64, 256, 128, 128, 384...]
-    # <class 'list'>: [1, 5, 8, 12, 15, 18, 21, 24, 27, 30, 33, 37, 40, 43, 46, 49, 52, 55, 58, 62, 65, 68, 71, 79, 85, 61, 91, 97, 36]
+    # <class 'list'>: [1, 5, 8, 12, 15, 18, 21, 24, 27, 30, 33, 37, 40, 43, 46, 49, 52, 55, 58, 62, 65, 68, 71, 79,
+    # 85, 61, 91, 97, 36]
     return module_list, routs
 
 
@@ -243,8 +246,9 @@ class Darknet(nn.Module):
         if self.training:
             return output
         else:
-            # io代表进行了处理的YOLO层输出结果 torch.Size([1, 390, 85])       torch.Size([1, 1560, 85])      torch.Size([1, 6240, 85])
-            # p代表YOLO层预测出来的结果        torch.Size([1, 3, 13, 10, 85]) torch.Size([1, 3, 26, 20, 85]) torch.Size([1, 3, 52, 40, 85])
+            # io代表进行了处理的YOLO层输出结果 torch.Size([1, 390, 85])       torch.Size([1, 1560, 85])      torch.Size([1, 6240,
+            # 85]) p代表YOLO层预测出来的结果        torch.Size([1, 3, 13, 10, 85]) torch.Size([1, 3, 26, 20, 85]) torch.Size([
+            # 1, 3, 52, 40, 85])
             io, p = list(zip(*output))  # inference output, training output
             return torch.cat(io, 1), p
 
