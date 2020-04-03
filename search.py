@@ -26,6 +26,7 @@ def detect(opt,
     torch.backends.cudnn.benchmark = False  # set False for reproducible results
     if os.path.exists(output):
         shutil.rmtree(output)  # delete output folder
+    time.sleep(1)  # insure makedir func follows rmtree func
     os.makedirs(output)  # make new output folder
 
     # 行人重识别模型初始化
