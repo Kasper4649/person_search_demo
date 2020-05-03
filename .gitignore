@@ -1,5 +1,5 @@
 __pycache__
 .idea
 /weights
-*mp4
-*jpg
+*.mp4
+*.jpg
