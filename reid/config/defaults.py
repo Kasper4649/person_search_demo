@@ -26,7 +26,7 @@ _C.MODEL.NAME = 'resnet50_ibn_a'
 # Last stride of backbone
 _C.MODEL.LAST_STRIDE = 1
 # Path to pretrained model of backbone
-_C.MODEL.PRETRAIN_PATH = '/home/common/wangsong/weights/r50_ibn_a.pth'
+_C.MODEL.PRETRAIN_PATH = r"weights/r50_ibn_a.pth"
 # Use ImageNet pretrained model to initialize backbone or use self trained model to initialize the whole model
 # If train with BNNeck, options: 'bnneck' or 'no'
 _C.MODEL.NECK = 'bnneck'

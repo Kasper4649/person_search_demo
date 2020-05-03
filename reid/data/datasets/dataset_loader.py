@@ -1,8 +1,5 @@
 # encoding: utf-8
-"""
-@author:  liaoxingyu
-@contact: sherlockliao01@gmail.com
-"""
+
 
 import os.path as osp
 from PIL import Image

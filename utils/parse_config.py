@@ -11,7 +11,7 @@ def parse_model_cfg(path):
     """
     # 加载文件并过滤掉文本中多余内容
     file = open(path, 'r')
-    lines = file.read().split('\n')  # store the lines in a list等价于 readlines
+    lines = file.read().split('\n')  # store the lines in a list 等价于 readlines
     lines = [x for x in lines if x and not x.startswith('#')]  # 去掉空行和以 # 开头的注释行
     lines = [x.rstrip().lstrip() for x in lines]  # 去掉左右两边的空格(rstricp 是去掉右边的空格，lstrip 是去掉左边的空格)
 
