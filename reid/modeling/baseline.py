@@ -12,9 +12,9 @@ class Baseline(nn.Module):
 
     def __init__(self, num_classes, model_name, model_path, last_stride=1):
         """
-        :param num_classes: 10126 训练的行人ID类别数目
+        :param num_classes: 10126 训练的行人 ID 类别数目
         :param model_name: 'resnet50_ibn_a'
-        :param model_path: 预训练模型路径 '/home/common/wangsong/weights/r50_ibn_a.pth'
+        :param model_path: 预训练模型路径 '/weights/r50_ibn_a.pth'
         :param last_stride: 1 取消最后的下采样
         :param neck: 使用'bnneck'
         :param neck_feat: 'after'
@@ -58,6 +58,7 @@ class Baseline(nn.Module):
     def load_param(self, trained_path):
         param_dict = torch.load(trained_path)
         for i in param_dict:
+            # print(i)
             if 'classifier' in i:
                 continue
             self.state_dict()[i].copy_(param_dict[i])

@@ -10,28 +10,22 @@ from utils.utils import *
 
 
 def detect(opt,
-           images='data/samples',  # input folder
-           output='output',  # output folder
-           fourcc='mp4v',  # video codec
-           img_size=416,
-           conf_thres=0.5,
-           nms_thres=0.5,
-           dist_thres=1.0,
            save_txt=False,
            save_images=True):
+
     # Initialize
     device = torch_utils.select_device(force_cpu=False)
     torch.backends.cudnn.benchmark = False  # set False for reproducible results
-    if os.path.exists(output):
-        shutil.rmtree(output)  # delete output folder
-    time.sleep(1)  # insure makedir func follows rmtree func
-    os.makedirs(output)  # make new output folder
+    if os.path.exists(opt.output):
+        shutil.rmtree(opt.output)  # delete output folder
+    time.sleep(1)  # ensure makedir func following rmtree func
+    os.makedirs(opt.output)  # make new output folder
 
     # 行人重识别模型初始化
     query_loader, num_query = make_data_loader(reidCfg)
-    reidreid_modelodel = build_model(reidCfg, num_classes=10126)
-    reidreid_modelodel.load_param(reidCfg.TEST.WEIGHT)
-    reidreid_modelodel.to(device).eval()
+    reid_model = build_model(reidCfg, num_classes=10126)
+    reid_model.load_param(reidCfg.TEST.WEIGHT)
+    reid_model.to(device).eval()
 
     query_feats = []
     query_pids = []
@@ -40,7 +34,7 @@ def detect(opt,
         with torch.no_grad():
             img, pid, camid = batch
             img = img.to(device)
-            feat = reidreid_modelodel(img)  # 一共 2 张待查询图片，每张图片特征向量 2048 torch.Size([2, 2048])
+            feat = reid_model(img)  # 两张待查询图片每张特征向量 2048 torch.Size([2, 2048])
             query_feats.append(feat)
             query_pids.extend(np.asarray(pid))  # extend() 函数用于在列表末尾一次性追加另一个序列中的多个值（用新列表扩展原来的列表）。
 
@@ -49,7 +43,7 @@ def detect(opt,
     query_feats = torch.nn.functional.normalize(query_feats, dim=1, p=2)  # 计算出查询图片的特征向量
 
     # 行人检测模型初始化
-    model = Darknet(opt.cfg, img_size)
+    model = Darknet(opt.cfg, opt.img_size)
 
     # Load weights
     if opt.weights.endswith('.pt'):  # pytorch format
@@ -64,13 +58,13 @@ def detect(opt,
     if opt.half:
         model.half()
 
-    # Set Dataloader
+    # Set Data Loader
     vid_path, vid_writer = None, None
     if opt.webcam:
         save_images = False
-        data_loader = LoadWebcam(img_size=img_size, half=opt.half)
+        data_loader = LoadWebcam(img_size=opt.img_size, half=opt.half)
     else:
-        data_loader = LoadImages(images, img_size=img_size, half=opt.half)
+        data_loader = LoadImages(opt.images, img_size=opt.img_size, half=opt.half)
 
     # Get classes and colors
     # parse_data_cfg(data)['names']:得到类别名称文件路径 names=data/coco.names
@@ -83,12 +77,12 @@ def detect(opt,
         t = time.time()
         # if i < 500 or i % 5 == 0:
         #     continue
-        save_path = str(Path(output) / Path(path).name)  # 保存的路径
+        save_path = str(Path(opt.output) / Path(path).name)  # 保存的路径
 
         # Get detections shape: (3, 416, 320)
         img = torch.from_numpy(img).unsqueeze(0).to(device)  # torch.Size([1, 3, 416, 320])
         pred, _ = model(img)  # 经过处理的网络预测，和原始的
-        det = non_max_suppression(pred.float(), conf_thres, nms_thres)[0]  # torch.Size([5, 7])
+        det = non_max_suppression(pred.float(), opt.conf_thres, opt.nms_thres)[0]  # torch.Size([5, 7])
 
         if det is not None and len(det) > 0:
             # Rescale boxes from 416 to true image size 映射到原图
@@ -99,7 +93,7 @@ def detect(opt,
             for c in det[:, -1].unique():  # 对图片的所有类进行遍历循环
                 n = (det[:, -1] == c).sum()  # 得到了当前类别的个数，也可以用来统计数目
                 if classes[int(c)] == 'person':
-                    print('%g %ss' % (n, classes[int(c)]), end=', ')  # 打印个数和类别'5 persons'
+                    print('%g %ss' % (n, classes[int(c)]), end=', ')  # 打印个数和类别
 
             # Draw bounding boxes and labels of detections
             # (x1y1x2y2, obj_conf, class_conf, class_pred)
@@ -115,7 +109,7 @@ def detect(opt,
                 # Add bbox to the image
                 label = '%s %.2f' % (classes[int(cls)], conf)  # 'person 1.00'
                 if classes[int(cls)] == 'person':
-                    # plot_one_bo x(xyxy, im0, label=label, color=colors[int(cls)])
+                    # plot_one_box(xyxy, im0, label=label, color=colors[int(cls)])
                     xmin = int(xyxy[0])
                     ymin = int(xyxy[1])
                     xmax = int(xyxy[2])
@@ -134,7 +128,7 @@ def detect(opt,
             if gallery_img:
                 gallery_img = torch.cat(gallery_img, dim=0)  # torch.Size([7, 3, 256, 128])
                 gallery_img = gallery_img.to(device)
-                gallery_feats = reidreid_modelodel(gallery_img)  # torch.Size([7, 2048])
+                gallery_feats = reid_model(gallery_img)  # torch.Size([7, 2048])
                 print("The gallery feature is normalized")
                 gallery_feats = torch.nn.functional.normalize(gallery_feats, dim=1, p=2)  # 计算出查询图片的特征向量
 
@@ -157,7 +151,7 @@ def detect(opt,
                 distmat = distmat.cpu().numpy()  # <class 'tuple'>: (3, 12)
                 distmat = distmat.sum(axis=0) / len(query_feats)  # 平均一下 query 中同一行人的多个结果
                 index = distmat.argmin()
-                if distmat[index] < dist_thres:
+                if distmat[index] < opt.dist_thres:
                     print('距离：%s' % distmat[index])
                     plot_one_box(gallery_loc[index], im0, label='find!', color=colors[int(cls)])
                     # cv2.imshow('person search', im0)
@@ -180,10 +174,10 @@ def detect(opt,
                     fps = vid_cap.get(cv2.CAP_PROP_FPS)
                     width = int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
                     height = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                    vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*fourcc), fps, (width, height))
+                    vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*opt.fourcc), fps, (width, height))
                 vid_writer.write(im0)
 
     if save_images:
-        print('Results saved to %s' % os.getcwd() + os.sep + output)
+        print('Results saved to %s' % os.getcwd() + os.sep + opt.output)
 
     print('Done. (%.3fs)' % (time.time() - t0))

@@ -13,12 +13,12 @@ class Market1501(BaseImageDataset):
     Market1501
     命名规则：
     以 0001_c1s1_000151_01.jpg 为例
-    1） 0001 表示每个人的标签编号，从0001到1501；
-    2） c1 表示第一个摄像头(camera1)，共有6个摄像头；
+    1） 0001 表示每个人的标签编号，从 0001 到 1501；
+    2） c1 表示第一个摄像头(camera1)，共有 6 个摄像头；
     3） s1 表示第一个录像片段(sequence1)，每个摄像机都有数个录像段；
-    4） 000151 表示 c1s1 的第000151帧图片，视频帧率25fps；
-    5） 01 表示 c1s1_001051 这一帧上n的第1个检测框，由于采用DPM检测器，
-        对于每一帧上的行人可能会框出好几个bbox。00 表示手工标注框
+    4） 000151 表示 c1s1 的第 000151 帧图片，视频帧率 25fps；
+    5） 01 表示 c1s1_001051 这一帧上 n 的第 1 个检测框，由于采用 DPM 检测器，
+        对于每一帧上的行人可能会框出好几个 bbox。00 表示手工标注框
     Dataset statistics:
     # identities: 1501 (+1 for background)
     # images: 12936 (train) + 3368 (query) + 15913 (gallery)
@@ -51,7 +51,7 @@ class Market1501(BaseImageDataset):
         # re+	 : 匹配 1 个或多个的表达式。
         # (re) : 匹配括号内的表达式，也表示一个组
         # '-1_c6s1_078001_05.jpg',注意 -1 的情况，所以有 [-\d]
-        # 由于是多个数字例如'0002_c1s1_000451_03.jpg'，0002，因此 [-\d]+
+        # 由于是多个数字例如 '0002_c1s1_000451_03.jpg'，0002，因此 [-\d]+
         # 因为要取出这个数字，因此加上括号作为一个 group
         pattern = re.compile(r'([-\d]+)_c(\d)')
 
@@ -63,7 +63,7 @@ class Market1501(BaseImageDataset):
             # pid: 每个人的标签编号 3
             # _  : 摄像头号 1
             pid, _ = map(int, pattern.search(img_path).groups())
-            if pid == -1: continue  # junk images are just ignored 测试集 gallery 会有-1的图片，扔掉
+            if pid == -1: continue  # junk images are just ignored 测试集 gallery 会有 -1 的图片，扔掉
             # query 一共 3 个 id： {1425, 3, 1452}
             # gallery一共 751 个:{0, 1, 3, 4, 5, 6, 8, 9, ... 1497, 1498, 1499, 1501}
             pid_container.add(pid)
@@ -74,8 +74,8 @@ class Market1501(BaseImageDataset):
         dataset = []
         for img_path in img_paths:
             pid, camid = map(int, pattern.search(img_path).groups())
-            if pid == -1: continue  # junk images are just ignored pid为-1代表垃圾图片，忽略掉
-            # assert 0 <= pid <= 1501  # pid == 0 means background pid为0代表背景图片
+            if pid == -1: continue  # junk images are just ignored pid 为 -1 代表垃圾图片，忽略掉
+            # assert 0 <= pid <= 1501  # pid == 0 means background pid 为 0 代表背景图片
             # assert 1 <= camid <= 6   # 6 个摄像头 检查一下
             camid -= 1  # index starts from 0 摄像头号从零开始
             if relabel: pid = pid2label[pid]

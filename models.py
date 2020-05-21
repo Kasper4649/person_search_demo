@@ -8,29 +8,30 @@ from utils.utils import *
 def create_modules(module_defs, img_size, arc):
     # Constructs module list of layer blocks from module configuration in module_defs
 
-    hyperparams = module_defs.pop(0)  # 存储了cfg中[net]的信息，它是一个字典，获取网络输入和预处理相关信息
+    hyperparams = module_defs.pop(0)  # 存储了 cfg 中 [net] 的信息，它是一个字典，获取网络输入和预处理相关信息
     output_filters = [int(hyperparams[
-                              'channels'])]  # 初始值对应于输入数据3通道，我们不仅需要追踪前一层的卷积核数量，还需要追踪之前每个层。随着不断地迭代，我们将每个模块的输出卷积核数量添加到 output_filters 列表上。
-    module_list = nn.ModuleList()  # 一定要用ModuleList()才能被torch识别为module并进行管理，不能用list！
+                              'channels'])]  # 初始值对应于输入数据 3 通道，我们不仅需要追踪前一层的卷积核数量，还需要追踪之前每个层。
+    # 随着不断地迭代，我们将每个模块的输出卷积核数量添加到 output_filters 列表上。
+    module_list = nn.ModuleList()  # 一定要用 ModuleList() 才能被 torch 识别为 module 并进行管理，不能用 list！
     routs = []  # list of layers which rout to deeper layes
     yolo_index = -1
 
     for i, mdef in enumerate(module_defs):  # 遍历每一层网络配置
-        modules = nn.Sequential()  # 这里每个块用nn.sequential()创建为了一个module,一个module有多个层
+        modules = nn.Sequential()  # 这里每个块用 nn.sequential() 创建为了一个 module,一个 module 有多个层
 
         if mdef['type'] == 'convolutional':
             ''' 1. 卷积层 '''
-            bn = int(mdef['batch_normalize'])  # 根据配置是否需要bn,默认是0不需要
+            bn = int(mdef['batch_normalize'])  # 根据配置是否需要 bn,默认是 0 不需要
             filters = int(mdef['filters'])  # 得到输出的通道数 32
             kernel_size = int(mdef['size'])  # 得到卷积核大小 3
-            pad = (kernel_size - 1) // 2 if int(mdef['pad']) else 0  # 根据卷积核大小得到padding数
+            pad = (kernel_size - 1) // 2 if int(mdef['pad']) else 0  # 根据卷积核大小得到 padding 数
             # 开始创建并添加相应层
             modules.add_module('Conv2d', nn.Conv2d(in_channels=output_filters[-1],
                                                    out_channels=filters,
                                                    kernel_size=kernel_size,
                                                    stride=int(mdef['stride']),
                                                    padding=pad,
-                                                   bias=not bn))  # 卷积层后无BN层就需要bias
+                                                   bias=not bn))  # 卷积层后无 BN 层就需要 bias
             if bn:  # Add the Batch Norm Layer
                 modules.add_module('BatchNorm2d', nn.BatchNorm2d(filters, momentum=0.1))
             if mdef['activation'] == 'leaky':  # TODO: activation study https://github.com/ultralytics/yolov3/issues/441
@@ -57,12 +58,11 @@ def create_modules(module_defs, img_size, arc):
 			没有使用 Bilinear2dUpsampling
 			实际使用的为最近邻插值
 			'''
-
-            # 这个stride在cfg中就是2，所以下面的scale_factor写2或者stride是等价的
+            # 这个 stride 在 cfg 中就是 2，所以下面的 scale_factor 写 2 或者 stride 是等价的
             modules = nn.Upsample(scale_factor=int(mdef['stride']), mode='nearest')
 
         # route layer -> Empty layer
-        # route层的作用：当layer取值为正时，输出这个正数对应的层的特征，如果layer取值为负数，输出route层向后退layer层对应层的特征
+        # route 层的作用：当 layer 取值为正时，输出这个正数对应的层的特征，如果 layer 取值为负数，输出 route 层向后退 layer 层对应层的特征
         elif mdef['type'] == 'route':  # nn.Sequential() placeholder for 'route' layer
             layers = [int(x) for x in mdef['layers'].split(',')]
             filters = sum([output_filters[i + 1 if i > 0 else i] for i in layers])
@@ -82,12 +82,12 @@ def create_modules(module_defs, img_size, arc):
 
         elif mdef['type'] == 'yolo':
             yolo_index += 1
-            mask = [int(x) for x in mdef['mask'].split(',')]  # anchor mask 解析此YOLO层需要的anchor: [6, 7, 8]
+            mask = [int(x) for x in mdef['mask'].split(',')]  # anchor mask 解析此 YOLO 层需要的 anchor: [6, 7, 8]
             modules = YOLOLayer(anchors=mdef['anchors'][mask],
-                                # anchor list 根据anchor_idxs得到所需要的anchor: [(116, 90), (156, 198), (373, 326)]
+                                # anchor list 根据 anchor_idxs 得到所需要的 anchor: [(116, 90), (156, 198), (373, 326)]
                                 nc=int(mdef['classes']),  # number of classes 类别数量
                                 img_size=img_size,  # (416, 416)
-                                yolo_index=yolo_index,  # 0, 1 or 2 三个YOLO检测层
+                                yolo_index=yolo_index,  # 0, 1 or 2 三个 YOLO 检测层
                                 arc=arc)  # yolo architecture
 
             # Initialize preceding Conv2d() bias (https://arxiv.org/pdf/1708.02002.pdf section 3.3)
@@ -151,8 +151,8 @@ class YOLOLayer(nn.Module):
     def forward(self, p, img_size, var=None):
         """
 
-        :param p: 输入的YOLO检测特征图 torch.Size([1, 255, 13, 10]) BCHW
-        :param img_size: 输入尺寸torch.Size([416, 320])
+        :param p: 输入的 YOLO 检测特征图 torch.Size([1, 255, 13, 10]) BCHW
+        :param img_size: 输入尺寸 torch.Size([416, 320])
         :param var:
         :return:
         """
@@ -168,12 +168,12 @@ class YOLOLayer(nn.Module):
 
         else:  # inference
             # Get outputs
-            # 这里的prediction（p）是初步的所有预测，在grid_size*grid_size个网格中，它表示每个网格都会有num_anchor（3）个anchor框
+            # 这里的 prediction（p）是初步的所有预测，在 grid_size*grid_size 个网格中，它表示每个网格都会有 num_anchor（3）个anchor 框
             # s = 1.5  # scale_xy  (pxy = pxy * s - (s - 1) / 2)
             io = p.clone()  # inference output
-            # 针对每个网格cell的偏移量，每个网格的单位长度为1，而预测的中心点（x，y）是归一化的（0，1之间），所以可以直接相加
+            # 针对每个网格 cell 的偏移量，每个网格的单位长度为 1，而预测的中心点（x，y）是归一化的（0，1 之间），所以可以直接相加
             io[..., 0:2] = torch.sigmoid(io[..., 0:2]) + self.grid_xy  # xy # Center xy 相对于特征图而不是原图
-            # anchor_w的范围是[0,grid_size](416下)，浮点型变量
+            # anchor_w 的范围是 [0,grid_size](416下)，浮点型变量
             io[..., 2:4] = torch.exp(io[..., 2:4]) * self.anchor_wh  # wh yolo method 相对于特征图而不是原图
             # io[..., 2:4] = ((torch.sigmoid(io[..., 2:4]) * 2) ** 3) * self.anchor_wh  # wh power method
             io[..., :4] *= self.stride  # 乘上了特征图下采样的倍数，放大到最初输入的尺寸，使得由相对于特征图变成相对于输入图像（416）
@@ -199,8 +199,8 @@ class Darknet(nn.Module):
 
     def __init__(self, cfg, img_size=(416, 416), arc='default'):
         """
-        构建YOLO-V3模型
-        :param cfg: 模型配置文件 'cfg/yolov3-spp.cfg'
+        构建 YOLO-V3 模型
+        :param cfg: 模型配置文件 'cfg/yolov3.cfg'
         :param img_size: 网络的输入分辨率
         :param arc: 'default'
         """
@@ -208,7 +208,7 @@ class Darknet(nn.Module):
 
         self.module_defs = parse_model_cfg(cfg)  # 解析模型配置文件，得到配置列表
         self.module_list, self.routs = create_modules(self.module_defs, img_size, arc)
-        self.yolo_layers = get_yolo_layers(self)  # 得到三个yolo检测层分别所在的层数: [82, 94, 106]
+        self.yolo_layers = get_yolo_layers(self)  # 得到三个 yolo 检测层分别所在的层数: [82, 94, 106]
 
         # Darknet Header https://github.com/AlexeyAB/darknet/issues/2914#issuecomment-496675346
         self.version = np.array([0, 2, 5], dtype=np.int32)  # (int32) version info: major, minor, revision
@@ -396,9 +396,9 @@ def save_weights(self, path='model.weights', cutoff=-1):
                 conv_layer.weight.data.cpu().numpy().tofile(f)
 
 
-def convert(cfg='cfg/yolov3-spp.cfg', weights='weights/yolov3-spp.weights'):
+def convert(cfg='cfg/yolov3.cfg', weights='weights/yolov3-spp.weights'):
     # Converts between PyTorch and Darknet format per extension (i.e. *.weights convert to *.pt and vice versa)
-    # from models import *; convert('cfg/yolov3-spp.cfg', 'weights/yolov3-spp.weights')
+    # from models import *; convert('cfg/yolov3.cfg', 'weights/yolov3-spp.weights')
 
     # Initialize model
     model = Darknet(cfg)

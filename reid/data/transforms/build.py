@@ -4,7 +4,7 @@
 import torchvision.transforms as T
 
 
-# 这里改成只构建验证集了
+# 只构建验证集
 def build_transforms(cfg):
     normalize_transform = T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     transform = T.Compose([

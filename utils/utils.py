@@ -184,9 +184,9 @@ def non_max_suppression(prediction, conf_thres=0.5, nms_thres=0.5):
 
         # Select only suitable predictions
         # 1.pred[:, 4] > conf_thres: 保留置信度阈值大于阈值的预测框
-        # 2.(pred[:, 2:4] > min_wh).all(1) > min_wh: 保留w,h > min_wh = 2的预测框，太小的忽略不计
+        # 2.(pred[:, 2:4] > min_wh).all(1) > min_wh: 保留 w,h > min_wh = 2 的预测框，太小的忽略不计
         # 3.torch.isfinite(pred).all(1): 保留预测值都正常的
-        # torch.isfinite(pred) 返回一个新的张量，其布尔元素表示每个元素是否为+/-INF,是INF NAN则返回0
+        # torch.isfinite(pred) 返回一个新的张量，其布尔元素表示每个元素是否为 +/-INF,是 INF NAN 则返回 0
         i = (pred[:, 4] > conf_thres) & (pred[:, 2:4] > min_wh).all(1) & torch.isfinite(pred).all(1)
         pred = pred[i]  # 经过NMS，只剩下29个预测框 torch.Size([29, 85])
 
@@ -195,7 +195,7 @@ def non_max_suppression(prediction, conf_thres=0.5, nms_thres=0.5):
             continue
 
         # Select predicted classes
-        # 进行NMS时，使用的是类别概率乘以confidence
+        # 进行 NMS 时，使用的是类别概率乘以 confidence
         # 这里选择类别只用类别概率
         class_conf = class_conf[i]
         class_pred = class_pred[i].unsqueeze(1).float()
@@ -245,10 +245,10 @@ def non_max_suppression(prediction, conf_thres=0.5, nms_thres=0.5):
 
             elif nms_style == 'AND':  # requires overlap, single boxes erased
                 while len(dc) > 1:  # 21->14->9->3->0
-                    # 计算得分最高的预测框与其他框的IoU
+                    # 计算得分最高的预测框与其他框的 IoU
                     iou = bbox_iou(dc[0], dc[1:])  # iou with other boxes dc[1:]: torch.Size([20])
-                    if iou.max() > 0.5:  # 与当前conf得分最高的预测框IoU最大的如果大于0.5
-                        det_max.append(dc[:1])  # 那么就将conf得分最高的预测框加入最终的det_max
+                    if iou.max() > 0.5:  # 与当前 conf 得分最高的预测框 IoU 最大的如果大于 0.5
+                        det_max.append(dc[:1])  # 那么就将 conf 得分最高的预测框加入最终的 det_max
                     dc = dc[1:][iou < nms_thres]  # remove ious > threshold
 
             elif nms_style == 'MERGE':  # weighted mixture box 默认采用，精度更高，但速度较慢一些
@@ -256,8 +256,8 @@ def non_max_suppression(prediction, conf_thres=0.5, nms_thres=0.5):
                     if len(dc) == 1:
                         det_max.append(dc)
                         break
-                    i = bbox_iou(dc[0], dc) > nms_thres  # 取大于NMS阈值的框
-                    weights = dc[i, 4:5]  # 取出iou大于NMS阈值的框求得这些框的conf值作为weights torch.Size([7, 1])
+                    i = bbox_iou(dc[0], dc) > nms_thres  # 取大于 NMS 阈值的框
+                    weights = dc[i, 4:5]  # 取出 iou 大于 NMS 阈值的框求得这些框的 conf 值作为 weights torch.Size([7, 1])
                     dc[0, :4] = (weights * dc[i, :4]).sum(0) / weights.sum()
                     det_max.append(dc[:1])
                     dc = dc[i == 0]  # 这一步也就是进行了筛选
@@ -451,7 +451,7 @@ def print_info(info, _type=None):
 
 
 def cv2ImgAddText(img, text, left, top, textColor=(0, 255, 0), textSize=20):
-    if (isinstance(img, np.ndarray)):  # 判断是否OpenCV图片类型
+    if (isinstance(img, np.ndarray)):  # 判断是否 OpenCV 图片类型
         img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     draw = ImageDraw.Draw(img)
     fontText = ImageFont.truetype("font/simsun.ttc", textSize, encoding="utf-8")

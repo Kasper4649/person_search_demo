@@ -49,7 +49,7 @@ class LoadImages:  # for inference
         path = str(Path(path))  # os-agnostic
         files = []
         if os.path.isdir(path):
-            # files：列表，包含了待检测的图片路径[图片1，图片2...]
+            # files：列表，包含了待检测的图片路径[图片 1，图片 2...]
             # 'data\\samples\\bus.jpg'
             # 'data\\samples\\zidane.jpg'
             files = sorted(glob.glob(os.path.join(path, '*.*')))
