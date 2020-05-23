@@ -7,7 +7,7 @@ message SearchRequest {
 }
 
 message Response {
-    bytes file = 1;
+    string url = 1;
 }
 
 service SearchService {

@@ -5,6 +5,7 @@ from concurrent import futures
 import torch
 import grpc
 import io
+import yaml
 
 from message import message_pb2
 from message import message_pb2_grpc
@@ -28,8 +29,8 @@ class Search(message_pb2_grpc.SearchServiceServicer):
         parser.add_argument('--img-size', type=int, default=416, help='输入分辨率大小')
         parser.add_argument('--conf-thres', type=float, default=0.1, help='物体置信度阈值')
         parser.add_argument('--nms-thres', type=float, default=0.4, help='NMS 阈值')
-        parser.add_argument('--dist_thres', type=float, default=1.0, help='行人图片距离阈值，小于这个距离，就认为是该行人')
-        parser.add_argument('--fourcc', type=str, default='mp4v',
+        parser.add_argument('--dist_thres', type=float, default=1.4, help='行人图片距离阈值，小于这个距离，就认为是该行人')
+        parser.add_argument('--fourcc', type=str, default='vp80',
                             help='fourcc output video codec (verify ffmpeg support)')
         parser.add_argument('--output', type=str, default='output', help='检测后的图片或视频保存的路径')
         parser.add_argument('--half', default=False, help='是否采用半精度 FP16 进行推理')
@@ -40,9 +41,11 @@ class Search(message_pb2_grpc.SearchServiceServicer):
         with torch.no_grad():
             detect(opt)
 
-        with open("output/"+request.name, "rb") as f:
-            output = f.read()
-        return message_pb2.Response(file=output)
+        with open("config.yaml", "r") as f:
+            config = yaml.load(f)
+        output_url = config["OUTPUT_BASE_URL"] + request.name
+
+        return message_pb2.Response(url=output_url)
 
 
 def serve():
